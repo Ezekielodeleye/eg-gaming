@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0d0c">
+<title>EG Gaming</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:#080b0a;color:#f5fff8;font-family:Arial,Helvetica,sans-serif}
+header{padding:24px 16px 34px;text-align:center;background:radial-gradient(circle at 50% 0,#15351f,#080b0a 65%);border-bottom:1px solid #1e2b24}
+.logo{font-size:56px}.brand{font-size:clamp(38px,10vw,68px);margin:5px 0 8px;font-weight:900}
+.tag{color:#aab5ae;font-size:18px}.hero{max-width:760px;margin:24px auto 0;border:1px solid #244332;border-radius:28px;padding:22px;background:linear-gradient(135deg,#102318,#0b1210);box-shadow:0 20px 60px #0008}
+.hero svg{width:100%;height:auto;display:block}
+nav{position:sticky;top:0;z-index:10;background:#0c100eeb;backdrop-filter:blur(12px);border-bottom:1px solid #202923}
+.navin{max-width:980px;margin:auto;padding:12px 14px;display:flex;gap:10px;overflow:auto}
+nav a{color:#dce8e0;text-decoration:none;padding:10px 14px;border-radius:999px;white-space:nowrap;background:#141b17}
+nav a:hover{background:#1c3024}
+main{max-width:980px;margin:auto;padding:20px 14px 60px}
+.card{background:#111613;border:1px solid #202b25;border-radius:24px;padding:26px 20px;margin:18px 0;box-shadow:0 14px 40px #0005}
+h2{font-size:30px;margin:0 0 12px}.muted{color:#9ca9a1;line-height:1.6}
+input,textarea,select{width:100%;padding:15px 16px;margin:7px 0;background:#090d0b;color:#fff;border:2px solid #303a34;border-radius:14px;font-size:16px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:#00df63}
+button,.btn{display:inline-block;border:0;border-radius:14px;padding:14px 20px;margin:7px 7px 7px 0;background:#00d95f;color:#031108;font-size:16px;font-weight:800;cursor:pointer;text-decoration:none}
+button.secondary,.btn.secondary{background:#303632;color:#fff}.btn.whatsapp{background:#25d366}
+.status{display:none;margin-top:10px;padding:14px;border-radius:14px;background:#202622;line-height:1.45}
+.status.show{display:block}.success{color:#5dff9b}.error{color:#ff7777}.info{color:#9bd3ff}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stat{padding:18px;border-radius:18px;background:#0d1210;border:1px solid #202923}.stat b{font-size:30px;color:#70ffad;display:block}
+.game-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.game{overflow:hidden;border:1px solid #27332c;border-radius:20px;background:#0d1210}
+.game img{width:100%;aspect-ratio:16/9;object-fit:cover;background:#151b18}
+.game .body{padding:17px}.game h3{margin:0 0 8px;font-size:21px}.game p{color:#aab4ae;line-height:1.5}
+.pill{display:inline-block;padding:7px 11px;border-radius:999px;background:#0a3b21;color:#72ffae;font-size:12px;font-weight:800}
+.leader{display:flex;justify-content:space-between;padding:14px 4px;border-bottom:1px solid #263029}
+#adminLink{display:none}
+footer{text-align:center;color:#738078;padding:30px 15px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.card{padding:22px 16px}button,.btn{width:100%;margin-right:0}.hero{padding:12px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🎮</div>
+  <div class="brand">EG Gaming</div>
+  <div class="tag">Play • Compete • Earn XP</div>
+  <div class="hero">
+    <svg viewBox="0 0 900 250" role="img" aria-label="EG Gaming design">
+      <defs>
+        <linearGradient id="eg" x1="0" x2="1"><stop offset="0" stop-color="#00d95f"/><stop offset="1" stop-color="#62a8ff"/></linearGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <circle cx="450" cy="125" r="88" fill="none" stroke="url(#eg)" stroke-width="3" opacity=".35"/>
+      <circle cx="450" cy="125" r="62" fill="#0a120d" stroke="url(#eg)" stroke-width="5"/>
+      <path d="M405 108h90v36h-90z" rx="10" fill="url(#eg)" filter="url(#glow)"/>
+      <circle cx="425" cy="126" r="7" fill="#07100b"/>
+      <circle cx="477" cy="116" r="6" fill="#07100b"/>
+      <circle cx="477" cy="136" r="6" fill="#07100b"/>
+      <path d="M435 126h28M449 112v28" stroke="#07100b" stroke-width="7" stroke-linecap="round"/>
+      <path d="M55 125h285M560 125h285" stroke="url(#eg)" stroke-width="3" opacity=".6"/>
+      <text x="450" y="48" text-anchor="middle" fill="#dcffe9" font-size="19" font-family="Arial" letter-spacing="7">PLAY • COMPETE • EARN XP</text>
+      <text x="450" y="218" text-anchor="middle" fill="#9db0a4" font-size="17" font-family="Arial">EG GAMING</text>
+    </svg>
+  </div>
+</header>
+
+<nav><div class="navin">
+<a href="#account">Account</a><a href="#games">Games</a><a href="#leaderboard">Leaderboard</a><a href="#xp">Your XP</a><a href="#community">Community</a><a id="adminLink" href="admin.html">Admin</a>
+</div></nav>
+
+<main>
+<section class="card" id="account">
+<h2>👤 Account</h2>
+<span class="pill">GMAIL LOGIN</span>
+<input id="gmail" type="text" inputmode="email" autocomplete="email" placeholder="Gmail">
+<input id="password" type="password" autocomplete="current-password" placeholder="Password">
+<button id="signup">Create Account</button><button id="login">Login</button><button id="logout" class="secondary">Logout</button>
+<div id="authStatus" class="status"></div>
+<p id="userStatus" class="muted">Not logged in</p>
+</section>
+
+<section class="card" id="games">
+<h2>🎮 Games</h2>
+<p class="muted">Choose a game and start playing. Games added from the protected dashboard appear here automatically.</p>
+<div id="gameGrid" class="game-grid"><p class="muted">Loading games…</p></div>
+<div id="gameStatus" class="status"></div>
+</section>
+
+<section class="card" id="leaderboard">
+<h2>🏆 Leaderboard</h2>
+<div id="leaderboardRows" class="muted">Loading…</div>
+<button id="refreshBoard" class="secondary">Refresh</button>
+</section>
+
+<section class="card" id="xp">
+<h2>⭐ Your XP</h2>
+<div class="grid">
+<div class="stat"><b id="xpValue">0</b>XP</div>
+<div class="stat"><b id="levelValue">1</b>Level</div>
+<div class="stat"><b id="scoreValue">0</b>Best score</div>
+</div>
+</section>
+
+<section class="card" id="community">
+<h2>💬 EG Gaming Community</h2>
+<p class="muted">Join the WhatsApp community for gaming updates, competitions and announcements.</p>
+<a class="btn whatsapp" href="https://chat.whatsapp.com/E6aGvk5QBWl3bkZnQLLU2t" target="_blank" rel="noopener noreferrer">💬 Join WhatsApp Community</a>
+</section>
+</main>
+
+<footer>EG Gaming © 2026<br><span>Play fairly • Have fun • Keep improving</span></footer>
+
+<script>
+const SUPABASE_URL="https://rlvwglxklqdnspzquhra.supabase.co";
+const SUPABASE_KEY="sb_publishable_jWnBOgWiZnS89JDcmwrwkQ_Mmc454dB";
+const ADMIN_UID="8cd39435-a93c-4b2d-b4f2-f9ec7f61021c";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+let currentUser=null;
+
+function status(id,text,type){const e=$(id);e.textContent=text;e.className="status show "+(type||"info")}
+function gmailOK(v){return /^[A-Z0-9._%+-]+@gmail\\.com$/i.test(v.trim())}
+function level(x){return Math.floor(Number(x||0)/100)+1}
+
+async function ensureProfile(user){
+  await db.from("profiles").upsert({id:user.id,display_name:(user.email||"Player").split("@")[0],xp:0,level:1},{onConflict:"id"});
+}
+async function refreshUser(){
+  const {data}=await db.auth.getUser();
+  currentUser=data.user||null;
+  if(!currentUser){
+    $("userStatus").textContent="Not logged in";
+    $("adminLink").style.display="none";
+    $("xpValue").textContent="0"; $("levelValue").textContent="1"; $("scoreValue").textContent="0";
+    return;
+  }
+  $("userStatus").textContent="✅ Logged in with Gmail";
+  if(currentUser.id===ADMIN_UID) $("adminLink").style.display="block";
+  await ensureProfile(currentUser);
+  await loadProfile();
+}
+async function loadProfile(){
+  if(!currentUser)return;
+  const p=await db.from("profiles").select("xp,level").eq("id",currentUser.id).maybeSingle();
+  if(p.data){$("xpValue").textContent=p.data.xp||0;$("levelValue").textContent=p.data.level||level(p.data.xp)}
+  const s=await db.from("scores").select("score").eq("user_id",currentUser.id).order("score",{ascending:false}).limit(1).maybeSingle();
+  $("scoreValue").textContent=s.data?.score||0;
+}
+async function signup(){
+  const gmail=$("gmail").value.trim().toLowerCase(),password=$("password").value;
+  if(!gmailOK(gmail))return status("authStatus","❌ Enter a valid Gmail address ending in @gmail.com.","error");
+  if(password.length<6)return status("authStatus","❌ Password must be at least 6 characters.","error");
+  const r=await db.auth.signUp({email:gmail,password});
+  if(r.error)return status("authStatus","❌ "+r.error.message,"error");
+  if(r.data.user)await ensureProfile(r.data.user);
+  status("authStatus",r.data.session?"✅ Account created and logged in.":"✅ Account created. Confirm the Gmail account if Supabase asks for confirmation.","success");
+  await refreshUser();
+}
+async function login(){
+  const gmail=$("gmail").value.trim().toLowerCase(),password=$("password").value;
+  if(!gmailOK(gmail))return status("authStatus","❌ Enter your Gmail address.","error");
+  if(!password)return status("authStatus","❌ Enter your password.","error");
+  const r=await db.auth.signInWithPassword({email:gmail,password});
+  if(r.error)return status("authStatus","❌ "+r.error.message,"error");
+  status("authStatus","✅ Login successful.","success"); await refreshUser();
+}
+async function logout(){
+  const r=await db.auth.signOut();
+  if(r.error)return status("authStatus","❌ "+r.error.message,"error");
+  status("authStatus","✅ Logged out.","success"); await refreshUser();
+}
+function escapeHTML(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+
+async function loadGames(){
+  const r=await db.from("games").select("id,title,description,game_url,image_url,active").eq("active",true).order("created_at",{ascending:false});
+  if(r.error){$("gameGrid").innerHTML="";return status("gameStatus","❌ "+r.error.message,"error")}
+  if(!r.data.length){$("gameGrid").innerHTML='<p class="muted">No games yet. The admin can add games from the dashboard.</p>';return}
+  $("gameGrid").innerHTML=r.data.map(g=>{
+    const img=g.image_url||"";
+    return `<article class="game">${img?`<img src="${escapeHTML(img)}" alt="">`:""}<div class="body"><span class="pill">GAME</span><h3>${escapeHTML(g.title)}</h3><p>${escapeHTML(g.description||"")}</p>${g.game_url?`<a class="btn" href="${escapeHTML(g.game_url)}" target="_blank" rel="noopener noreferrer">Play Game</a>`:""}</div></article>`;
+  }).join("");
+}
+async function loadLeaderboard(){
+  const r=await db.from("scores").select("user_id,score,created_at").order("score",{ascending:false}).limit(20);
+  if(r.error){$("leaderboardRows").textContent="Unable to load leaderboard.";return}
+  if(!r.data.length){$("leaderboardRows").textContent="No scores yet.";return}
+  $("leaderboardRows").innerHTML=r.data.map((x,i)=>`<div class="leader"><span>#${i+1} Player</span><strong>${Number(x.score)||0} XP</strong></div>`).join("");
+}
+
+$("signup").onclick=signup;$("login").onclick=login;$("logout").onclick=logout;
+$("refreshBoard").onclick=loadLeaderboard;
+db.auth.onAuthStateChange(()=>setTimeout(refreshUser,0));
+refreshUser();loadGames();loadLeaderboard();
+</script>
+</body>
+</html>
