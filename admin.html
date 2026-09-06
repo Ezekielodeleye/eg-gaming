@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EG Gaming — Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#080b0a;color:#fff;font-family:Arial,Helvetica,sans-serif}
+header{padding:28px 16px;background:linear-gradient(135deg,#0e2116,#0a0d0c);border-bottom:2px solid #00d95f}
+.wrap{max-width:980px;margin:auto;padding:20px 14px 60px}.card{background:#111613;border:1px solid #243029;border-radius:24px;padding:24px 20px;margin:18px 0}
+h1{margin:0 0 8px;font-size:38px}h2{margin:0 0 14px;font-size:28px}.muted{color:#9ca9a1;line-height:1.55}
+input,textarea{width:100%;padding:15px;margin:7px 0;background:#090d0b;color:#fff;border:2px solid #303a34;border-radius:14px;font-size:16px}textarea{min-height:110px;resize:vertical}
+button,.btn{display:inline-block;padding:14px 18px;border:0;border-radius:14px;background:#00d95f;color:#031108;font-weight:800;text-decoration:none;cursor:pointer;margin:7px 7px 7px 0}
+button.secondary,.btn.secondary{background:#303632;color:#fff}.status{display:none;padding:14px;border-radius:14px;background:#202622;margin-top:10px}.show{display:block}.error{color:#ff7777}.success{color:#5dff9b}.info{color:#9bd3ff}
+.row{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #263029}.row:last-child{border-bottom:0}.row h3{margin:0 0 5px}.row p{margin:0;color:#9ca9a1}
+.thumb{width:90px;height:55px;object-fit:cover;border-radius:10px;background:#202622}.actions{white-space:nowrap}
+#app{display:none}
+@media(max-width:650px){.row{display:block}.actions{margin-top:10px}button,.btn{width:100%;margin-right:0}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>🎮 EG Gaming Admin</h1><div class="muted">Protected game management & uploads</div></div></header>
+<div class="wrap">
+<section id="gate" class="card"><h2>🔐 Admin access</h2><p class="muted">Log in with the Gmail account that has been assigned as the EG Gaming admin.</p><input id="gmail" placeholder="Gmail" autocomplete="email"><input id="password" type="password" placeholder="Password" autocomplete="current-password"><button id="login">Login</button><a class="btn secondary" href="index.html">Back to EG Gaming</a><div id="gateStatus" class="status"></div></section>
+
+<section id="app">
+<div class="card"><h2>➕ Add a game</h2>
+<p class="muted">Upload a game file or any game asset to Supabase Storage, then optionally give the playable game URL. There is no artificial file-size check in this page; actual limits depend on your Supabase plan/storage configuration.</p>
+<input id="title" placeholder="Game title">
+<textarea id="description" placeholder="Game description"></textarea>
+<input id="gameUrl" type="url" placeholder="Playable game URL (optional)">
+<label class="muted">Game file / ZIP (optional)</label><input id="gameFile" type="file">
+<label class="muted">Cover/design picture (optional)</label><input id="imageFile" type="file" accept="image/*">
+<button id="addGame">Upload & Add Game</button>
+<div id="uploadStatus" class="status"></div>
+</div>
+
+<div class="card"><h2>🎮 Manage games</h2><div id="games">Loading…</div></div>
+<div class="card"><a class="btn secondary" href="index.html">← Back to EG Gaming</a><button id="logout" class="secondary">Logout</button></div>
+</section>
+</div>
+
+<script>
+const SUPABASE_URL="https://rlvwglxklqdnspzquhra.supabase.co";
+const SUPABASE_KEY="sb_publishable_jWnBOgWiZnS89JDcmwrwkQ_Mmc454dB";
+const ADMIN_UID="8cd39435-a93c-4b2d-b4f2-f9ec7f61021c";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+function status(id,text,type){const e=$(id);e.textContent=text;e.className="status show "+(type||"info")}
+function gmailOK(v){return /^[A-Z0-9._%+-]+@gmail\\.com$/i.test(v.trim())}
+function safe(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+
+async function requireAdmin(){
+  const {data,error}=await db.auth.getUser();
+  if(error||!data.user||data.user.id!==ADMIN_UID){
+    $("gate").style.display="block";$("app").style.display="none";return false;
+  }
+  $("gate").style.display="none";$("app").style.display="block";await loadGames();return true;
+}
+$("login").onclick=async()=>{
+  const gmail=$("gmail").value.trim().toLowerCase(),password=$("password").value;
+  if(!gmailOK(gmail))return status("gateStatus","❌ Enter your Gmail address.","error");
+  const r=await db.auth.signInWithPassword({email:gmail,password});
+  if(r.error)return status("gateStatus","❌ "+r.error.message,"error");
+  if(r.data.user.id!==ADMIN_UID){await db.auth.signOut();return status("gateStatus","❌ This Gmail account is not the EG Gaming admin.","error")}
+  status("gateStatus","✅ Admin login successful.","success");await requireAdmin();
+};
+$("logout").onclick=async()=>{await db.auth.signOut();location.reload()};
+
+async function uploadFile(file,folder){
+  if(!file)return null;
+  const clean=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+  const path=folder+"/"+crypto.randomUUID()+"-"+clean;
+  const r=await db.storage.from("eg-games").upload(path,file,{upsert:false});
+  if(r.error)throw r.error;
+  const p=db.storage.from("eg-games").getPublicUrl(path);
+  return p.data.publicUrl;
+}
+$("addGame").onclick=async()=>{
+  const title=$("title").value.trim(),description=$("description").value.trim(),gameUrl=$("gameUrl").value.trim();
+  if(!title)return status("uploadStatus","❌ Enter a game title.","error");
+  try{
+    status("uploadStatus","⏳ Uploading…","info");
+    const gameFile=await uploadFile($("gameFile").files[0],"games");
+    const imageFile=await uploadFile($("imageFile").files[0],"images");
+    const u=await db.auth.getUser();
+    const r=await db.from("games").insert({title,description,game_url:gameUrl||null,file_url:gameFile,image_url:imageFile,active:true,created_by:u.data.user.id});
+    if(r.error)throw r.error;
+    $("title").value="";$("description").value="";$("gameUrl").value="";$("gameFile").value="";$("imageFile").value="";
+    status("uploadStatus","✅ Game added successfully.","success");await loadGames();
+  }catch(e){status("uploadStatus","❌ "+e.message,"error")}
+};
+async function loadGames(){
+  const r=await db.from("games").select("id,title,description,game_url,file_url,image_url,active,created_at").order("created_at",{ascending:false});
+  if(r.error)return $("games").textContent="❌ "+r.error.message;
+  if(!r.data.length)return $("games").innerHTML='<p class="muted">No games yet.</p>';
+  $("games").innerHTML=r.data.map(g=>`<div class="row">
+    <div>${g.image_url?`<img class="thumb" src="${safe(g.image_url)}" alt="">`:""}<h3>${safe(g.title)}</h3><p>${safe(g.description||"")}</p><p>${g.active?"Active":"Hidden"}</p></div>
+    <div class="actions"><button onclick="toggleGame('${g.id}',${!g.active})">${g.active?"Hide":"Show"}</button><button class="secondary" onclick="deleteGame('${g.id}')">Delete</button></div>
+  </div>`).join("");
+}
+window.toggleGame=async(id,active)=>{const r=await db.from("games").update({active}).eq("id",id);if(r.error)return alert(r.error.message);loadGames()}
+window.deleteGame=async(id)=>{if(!confirm("Delete this game?"))return;const r=await db.from("games").delete().eq("id",id);if(r.error)return alert(r.error.message);loadGames()}
+db.auth.onAuthStateChange(()=>setTimeout(requireAdmin,0));
+requireAdmin();
+</script>
+</body>
+</html>
